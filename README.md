@@ -1,18 +1,18 @@
 # mini-amm
 
-Um AMM (Automated Market Maker) em ~100 linhas de Solidity.
-É o motor da Uniswap reduzido ao osso: **dois potes, uma divisão, um produto que não diminui.**
+An AMM (Automated Market Maker) in ~100 lines of Solidity.
+It is the Uniswap engine stripped to the bone: **two pots, one division, one product that never decreases.**
 
-> ⚠️ **Código didático. Sem fee, sem shares de LP, sem auditoria. NÃO USE EM PRODUÇÃO.**
+> ⚠️ **Educational code. No fees, no LP shares, no audit. DO NOT USE IN PRODUCTION.**
 
-## O que tem aqui
+## What's inside
 
-| Arquivo | O que é |
+| File | What it is |
 |---|---|
-| `src/MiniAMM.sol` | Token ERC-20 mínimo + AMM x·y=k: `spotPrice`, `quote`, `addLiquidity`, `swap` com proteção `minOut` |
-| `test/MiniAMM.t.sol` | 5 testes que provam o comportamento (pool de exemplo: 10 WETH / 20.000 USDC) |
+| `src/MiniAMM.sol` | Minimal ERC-20 token + x·y=k AMM: `spotPrice`, `quote`, `addLiquidity`, `swap` with `minOut` protection |
+| `test/MiniAMM.t.sol` | 5 tests that prove the behavior (example pool: 10 WETH / 20,000 USDC) |
 
-## 1. Instalar o Foundry
+## 1. Install Foundry
 
 **Mac / Linux:**
 
@@ -20,27 +20,27 @@ Um AMM (Automated Market Maker) em ~100 linhas de Solidity.
 curl -L https://foundry.paradigm.xyz | bash
 ```
 
-Depois feche e abra o terminal (ou `source ~/.zshenv` / `~/.bashrc`) e rode:
+Then close and reopen your terminal (or `source ~/.zshenv` / `~/.bashrc`) and run:
 
 ```bash
 foundryup
 ```
 
-**Windows:** use o WSL. No PowerShell **como administrador**:
+**Windows:** use WSL. In PowerShell **as administrator**:
 
 ```powershell
 wsl --install
 ```
 
-Reinicie, abra o Ubuntu e rode os dois comandos de Mac/Linux acima.
+Reboot, open Ubuntu, and run the two Mac/Linux commands above.
 
-**Verificar:**
+**Verify:**
 
 ```bash
 forge --version
 ```
 
-## 2. Clonar e rodar
+## 2. Clone and run
 
 ```bash
 git clone --recursive https://github.com/melocalex/mini-amm
@@ -48,21 +48,21 @@ cd mini-amm
 forge test -vvv
 ```
 
-(Esqueceu o `--recursive`? Rode `git submodule update --init` dentro da pasta.)
+(Forgot `--recursive`? Run `git submodule update --init` inside the folder.)
 
-## 3. Como ler a saída
+## 3. How to read the output
 
-- `[PASS] test_...` — o teste passou; o número entre parênteses é o gás consumido.
-- `-vvv` mostra o *trace*: cada chamada de contrato, com argumentos e retornos. É assim que se debuga Solidity.
-- Quebre algo de propósito (mude `>=` para `>` no invariante) e rode de novo para ver um teste falhar.
+- `[PASS] test_...` — the test passed; the number in parentheses is the gas used.
+- `-vvv` shows the *trace*: every contract call with arguments and return values. This is how you debug Solidity.
+- Break something on purpose (change `>=` to `>` in the invariant) and run again to watch a test fail.
 
-## 4. Exercícios
+## 4. Exercises
 
-1. **Fee de 0,3%** — no `quote`, o input passa a valer `997/1000` do que entrou (é exatamente o que a Uniswap v2 faz). Ajuste os testes: com fee, o k passa a **crescer** a cada swap — é daí que vem o rendimento dos LPs.
-2. **Simule um sandwich attack** — escreva um teste com 3 swaps em sequência: bot compra, vítima compra (mais caro), bot vende (lucro). Imprima o lucro do bot com `console.log`. Depois proteja a vítima com um `minOut` justo e veja o ataque reverter.
-3. **Shares de LP** — nosso `addLiquidity` não devolve nada (o dinheiro fica preso!). Adicione `totalShares`, `shares[msg.sender]` e `removeLiquidity`. Referência: contrato `UniswapV2Pair`.
-4. **(Bônus) Meça o slippage** — faça um teste que troca 1%, 5%, 10% e 50% do pool e imprima o preço efetivo de cada trade. Compare com a regra de bolso: *slippage ≈ fração do pool que o trade representa*.
+1. **0.3% fee** — in `quote`, the input becomes worth `997/1000` of what came in (this is exactly what Uniswap v2 does). Adjust the tests: with a fee, k now **grows** on every swap — that is where LP yield comes from.
+2. **Simulate a sandwich attack** — write a test with 3 swaps in sequence: bot buys, victim buys (paying more), bot sells (profit). Print the bot's profit with `console.log`. Then protect the victim with a fair `minOut` and watch the attack revert.
+3. **LP shares** — our `addLiquidity` returns nothing (the money is stuck!). Add `totalShares`, `shares[msg.sender]` and `removeLiquidity`. Reference: the `UniswapV2Pair` contract.
+4. **(Bonus) Measure slippage** — write a test that swaps 1%, 5%, 10% and 50% of the pool and prints the effective price of each trade. Compare with the rule of thumb: *slippage ≈ the fraction of the pool your trade represents*.
 
-## Aviso final
+## Final warning
 
-Este contrato omite de propósito: fees, shares de LP, proteção de reentrância, tokens com fee-on-transfer, oráculos TWAP e mil outras coisas que fazem um AMM real ser seguro. O objetivo é caber numa tela e ser entendido em 20 minutos.
+This contract deliberately omits: fees, LP shares, reentrancy protection, fee-on-transfer tokens, TWAP oracles, and a thousand other things that make a real AMM safe. The goal is to fit on one screen and be understood in 20 minutes.

@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {MiniAMM, MiniToken} from "../src/MiniAMM.sol";
 
-/// Testes que provam, um por um, os fatos ditos nos slides.
-/// Pool de exemplo (igual aos slides): 10 WETH / 20.000 USDC.
+/// Tests that prove, one by one, the claims made in the slides.
+/// Example pool (same as the slides): 10 WETH / 20,000 USDC.
 contract MiniAMMTest is Test {
     MiniToken weth;
     MiniToken usdc;
@@ -19,7 +19,7 @@ contract MiniAMMTest is Test {
         usdc = new MiniToken("USD Coin", "USDC");
         amm = new MiniAMM(address(weth), address(usdc));
 
-        // LP semeia o pool com o exemplo dos slides: 10 WETH / 20.000 USDC
+        // The LP seeds the pool with the slide example: 10 WETH / 20,000 USDC
         weth.mint(lp, 10e18);
         usdc.mint(lp, 20_000e18);
         vm.startPrank(lp);
@@ -28,46 +28,46 @@ contract MiniAMMTest is Test {
         amm.addLiquidity(10e18, 20_000e18);
         vm.stopPrank();
 
-        // Trader tem USDC para comprar WETH
+        // The trader has USDC to buy WETH with
         usdc.mint(trader, 10_000e18);
         vm.prank(trader);
         usdc.approve(address(amm), type(uint256).max);
     }
 
-    /// (1) O primeiro depósito DEFINE o preço: 20.000 / 10 = 2.000 USDC por WETH.
-    function test_PrecoInicialEhRazaoDosPotes() public view {
+    /// (1) The first deposit SETS the price: 20,000 / 10 = 2,000 USDC per WETH.
+    function test_InitialPriceIsRatioOfPots() public view {
         assertEq(amm.spotPrice(), 2_000e18);
     }
 
-    /// (2) O exemplo dos slides: ~1 WETH custa ~2.222 USDC (e não 2.000!).
-    /// Slippage nasce da própria fórmula — ninguém precisou "manipular" nada.
-    function test_ComprarUmEthCustaMaisQueDoisMil() public view {
-        // out = 2.222 * 10 / (20.000 + 2.222) ≈ 0,9999 WETH
+    /// (2) The slide example: ~1 WETH costs ~2,222 USDC (not 2,000!).
+    /// Slippage falls out of the formula itself — nobody had to "manipulate" anything.
+    function test_BuyingOneEthCostsMoreThanTwoThousand() public view {
+        // out = 2,222 * 10 / (20,000 + 2,222) ≈ 0.9999 WETH
         uint256 out = amm.quote(2_222e18, false);
-        assertApproxEqRel(out, 1e18, 0.001e18); // ~1 WETH (tolerância 0,1%)
+        assertApproxEqRel(out, 1e18, 0.001e18); // ~1 WETH (0.1% tolerance)
     }
 
-    /// (3) Swap move o preço na direção certa: comprar WETH deixa WETH mais caro.
-    function test_SwapMovePrecoNaDirecaoCerta() public {
-        uint256 precoAntes = amm.spotPrice();
+    /// (3) A swap moves the price in the right direction: buying WETH makes WETH more expensive.
+    function test_SwapMovesPriceInRightDirection() public {
+        uint256 priceBefore = amm.spotPrice();
         vm.prank(trader);
         amm.swap(2_222e18, false, 0); // USDC -> WETH
-        assertGt(amm.spotPrice(), precoAntes);
+        assertGt(amm.spotPrice(), priceBefore);
     }
 
-    /// (4) O invariante: k = reserveA * reserveB nunca diminui num swap.
-    /// (Sem fee fica igual, salvo poeira de arredondamento a favor do pool.)
-    function test_KNuncaDiminui() public {
-        uint256 kAntes = amm.reserveA() * amm.reserveB();
+    /// (4) The invariant: k = reserveA * reserveB never decreases on a swap.
+    /// (Without a fee it stays equal, save for rounding dust in the pool's favor.)
+    function test_KNeverDecreases() public {
+        uint256 kBefore = amm.reserveA() * amm.reserveB();
         vm.prank(trader);
         amm.swap(1_000e18, false, 0);
-        assertGe(amm.reserveA() * amm.reserveB(), kAntes);
+        assertGe(amm.reserveA() * amm.reserveB(), kBefore);
     }
 
-    /// (5) minOut alto demais REVERTE — a defesa anti-sandwich.
-    /// O bot pode mexer o preço antes de você, mas não pode te forçar a aceitar.
-    function test_MinOutProtegeContraSandwich() public {
-        // quote diz ~0,9999 WETH; trader exige 1,1 WETH => reverte
+    /// (5) A minOut that is too high REVERTS — the anti-sandwich defense.
+    /// The bot can move the price before you, but it cannot force you to accept it.
+    function test_MinOutProtectsAgainstSandwich() public {
+        // quote says ~0.9999 WETH; the trader demands 1.1 WETH => revert
         vm.prank(trader);
         vm.expectRevert(bytes("slippage"));
         amm.swap(2_222e18, false, 1.1e18);
