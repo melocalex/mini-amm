@@ -43,7 +43,7 @@ forge --version
 ## 2. Clonar e rodar
 
 ```bash
-git clone --recursive https://github.com/Mis4nthr0pic/mini-amm
+git clone --recursive https://github.com/melocalex/mini-amm
 cd mini-amm
 forge test -vvv
 ```
